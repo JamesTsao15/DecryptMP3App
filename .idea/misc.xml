@@ -4,6 +4,8 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Android_Project/DecryptMP3App/app/src/main/res/layout/activity_main.xml" value="0.25364583333333335" />
+        <entry key="..\:/Android_Project/DecryptMP3App/app/src/main/res/layout/activity_player.xml" value="0.22" />
+        <entry key="..\:/Android_Project/DecryptMP3App/app/src/main/res/layout/listview_mp3.xml" value="0.25" />
       </map>
     </option>
   </component>
