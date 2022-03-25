@@ -38,13 +38,13 @@ class MediaPlayerService : Service() {
 
                 if(playStart==true) {
                     Log.e("JAMES","inLoop_playStart")
-                    mediaPlayer.start()
+                    if(!mediaPlayer.isPlaying)mediaPlayer.start()
                     playerState_pref.edit().putBoolean("playStart",false).commit()
                     playStart=false
                 }
                 if(playStop==true){
                     Log.e("JAMES","inLoop_playPause")
-                    mediaPlayer.pause()
+                    if(mediaPlayer.isPlaying)mediaPlayer.pause()
                     playerState_pref.edit().putBoolean("playStop",false).commit()
                     playStop=false
 
