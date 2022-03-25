@@ -15,6 +15,7 @@ import java.util.*
 
 class MediaPlayerService : Service() {
     private lateinit var mediaPlayer:MediaPlayer
+    private lateinit var fis:FileInputStream
     override fun onCreate() {
         Log.e("JAMES","Service_onCreate")
         mediaPlayer= MediaPlayer()
@@ -40,6 +41,7 @@ class MediaPlayerService : Service() {
                     Log.e("JAMES","isExitApp")
                     mediaPlayer.stop()
                     mediaPlayer.release()
+                    fis.close()
                     break
                 }
                 Thread.sleep(1)
@@ -56,7 +58,7 @@ class MediaPlayerService : Service() {
             val fos: FileOutputStream = FileOutputStream(tempMp3)
             fos.write(mp3ByteArray)
             fos.close()
-            val fis: FileInputStream = FileInputStream(tempMp3)
+            fis = FileInputStream(tempMp3)
             mediaPlayer.setDataSource(fis.fd)
             mediaPlayer.prepare()
             mediaPlayer.start()
