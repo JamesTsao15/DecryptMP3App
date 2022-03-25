@@ -1,7 +1,9 @@
 package com.example.decryptmp3app
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.media.MediaPlayer
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -9,6 +11,7 @@ import android.util.Log
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -25,10 +28,9 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var btn_PlayOrPause:ImageButton
     private lateinit var seekBar_CurrentProgress:SeekBar
     private lateinit var seekBar_VoiceControl: SeekBar
-    private var isPlayingOrNot:Boolean=false
     private var IVAES:ByteArray= ByteArray(0)
     private var AESKey:ByteArray= ByteArray(0)
-    private lateinit var  mediaPlayer:MediaPlayer
+    private var isPlayingOrNot:Boolean=false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +42,14 @@ class PlayerActivity : AppCompatActivity() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onResume() {
         super.onResume()
-        val sharedPreferences: SharedPreferences =
+        val mp3FileInformation_pref: SharedPreferences =
             getSharedPreferences("Mp3FileInformation", MODE_PRIVATE)
-        val musicName: String? =sharedPreferences.getString("MusicFileName","")
-
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val player_editor=playerState_pref.edit()
+        val musicName: String? =mp3FileInformation_pref.getString("MusicFileName","")
         tv_MusicFileName.text=musicName
         val document_dir=Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
         val encrypt_mp3_file=File(document_dir,"EncryptMP3")
@@ -53,20 +57,24 @@ class PlayerActivity : AppCompatActivity() {
         val music_byteArray=File(music_path).readBytes()
         openKEYFile()
         val decrypt_musicFile_ByteArray:ByteArray=DecryptByteArrayToMp3(IVAES,AESKey,music_byteArray)
-        PlayAudioByByteArray(decrypt_musicFile_ByteArray)
+        val intent= Intent(this,MediaPlayerService::class.java)
+        val mp3File_byteArray_To_String=Base64.getEncoder().encodeToString(decrypt_musicFile_ByteArray)
+        mp3FileInformation_pref.edit().putString("mp3File_byteArray_To_String",mp3File_byteArray_To_String).commit()
+        startService(intent)
+        isPlayingOrNot=true
+        player_editor.putBoolean("isPlayingOrNot",isPlayingOrNot).commit()
         btn_PlayOrPause.setOnClickListener {
             if(isPlayingOrNot==true){
-                mediaPlayer.pause()
                 btn_PlayOrPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
-                isPlayingOrNot=false
             }
             else{
-                mediaPlayer.start()
                 btn_PlayOrPause.setImageResource(R.drawable.ic_baseline_pause_24)
-                isPlayingOrNot=true
             }
-        }
 
+            isPlayingOrNot= !isPlayingOrNot
+            //Log.e("JAMES","isPlaying:"+isPlayingOrNot.toString())
+            player_editor.putBoolean("isPlayingOrNot",isPlayingOrNot).commit()
+        }
     }
     private fun DecryptByteArrayToMp3(ivAes: ByteArray,Aeskey: ByteArray,Mp3ByteArray_Encrypt: ByteArray):ByteArray{
         try {
@@ -95,21 +103,5 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
     }
-    private fun PlayAudioByByteArray(mp3ByteArray: ByteArray){
-        try {
-            val tempMp3=File.createTempFile("playing",".mp3")
-            tempMp3.deleteOnExit()
-            val fos:FileOutputStream= FileOutputStream(tempMp3)
-            fos.write(mp3ByteArray)
-            fos.close()
-            val fis:FileInputStream= FileInputStream(tempMp3)
-            mediaPlayer= MediaPlayer()
-            mediaPlayer.setDataSource(fis.fd)
-            mediaPlayer.prepare()
-            mediaPlayer.start()
-            isPlayingOrNot=true
-        }catch (e:IOException){
-            e.printStackTrace()
-        }
-    }
+
 }

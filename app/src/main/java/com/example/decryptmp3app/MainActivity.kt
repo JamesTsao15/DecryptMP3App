@@ -30,6 +30,9 @@ class MainActivity : AppCompatActivity() {
         listView_musicList=findViewById(R.id.listView_mp3File)
         val readPermisson:String=android.Manifest.permission.READ_EXTERNAL_STORAGE
         val writePermission:String=android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val player_editor=playerState_pref.edit()
+        player_editor.putBoolean("isExitApp",false).commit()
         if(ActivityCompat.checkSelfPermission(this,readPermisson)!=PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, arrayOf(readPermisson,writePermission),REQUEST_WRITE_AND_READ_PERMISSION)
         }
@@ -78,5 +81,12 @@ class MainActivity : AppCompatActivity() {
                 listView_musicList.adapter=MyAdapter(this,MusicArrayList,R.layout.listview_mp3)
             }
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val player_editor=playerState_pref.edit()
+        player_editor.putBoolean("isExitApp",true).commit()
     }
 }
