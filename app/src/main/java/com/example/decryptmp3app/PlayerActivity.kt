@@ -62,7 +62,7 @@ class PlayerActivity : AppCompatActivity() {
         mp3FileInformation_pref.edit().putString("mp3File_byteArray_To_String",mp3File_byteArray_To_String).commit()
         startService(intent)
         isPlayingOrNot=true
-        player_editor.putBoolean("isPlayingOrNot",isPlayingOrNot).commit()
+        player_editor.putBoolean("playStart",true).commit()
         btn_PlayOrPause.setOnClickListener {
             if(isPlayingOrNot==true){
                 btn_PlayOrPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
@@ -73,7 +73,10 @@ class PlayerActivity : AppCompatActivity() {
 
             isPlayingOrNot= !isPlayingOrNot
             //Log.e("JAMES","isPlaying:"+isPlayingOrNot.toString())
-            player_editor.putBoolean("isPlayingOrNot",isPlayingOrNot).commit()
+            if(isPlayingOrNot==true)player_editor.putBoolean("playStart",true).commit()
+            else{
+                player_editor.putBoolean("playStop",true).commit()
+            }
         }
     }
     private fun DecryptByteArrayToMp3(ivAes: ByteArray,Aeskey: ByteArray,Mp3ByteArray_Encrypt: ByteArray):ByteArray{

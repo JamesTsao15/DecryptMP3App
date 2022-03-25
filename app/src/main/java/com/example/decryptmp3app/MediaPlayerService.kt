@@ -11,6 +11,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.lang.IllegalStateException
 import java.util.*
 
 class MediaPlayerService : Service() {
@@ -19,7 +20,6 @@ class MediaPlayerService : Service() {
     override fun onCreate() {
         Log.e("JAMES","Service_onCreate")
         mediaPlayer= MediaPlayer()
-
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -32,14 +32,26 @@ class MediaPlayerService : Service() {
         PlayAudioByByteArray(mp3File_byteArray)
         val thread=Thread(Runnable {
             while(true){
-                val isPlayingOrNot=playerState_pref.getBoolean("isPlayingOrNot",true)
+                var playStart: Boolean =playerState_pref.getBoolean("playStart", false)
+                var playStop:Boolean=playerState_pref.getBoolean("playStop",false)
                 val isExitApp=playerState_pref.getBoolean("isExitApp",false)
-                Log.e("JAMES",isPlayingOrNot.toString())
-                if(isPlayingOrNot)mediaPlayer.start()
-                else mediaPlayer.pause()
+
+                if(playStart==true) {
+                    Log.e("JAMES","inLoop_playStart")
+                    mediaPlayer.start()
+                    playerState_pref.edit().putBoolean("playStart",false).commit()
+                    playStart=false
+                }
+                if(playStop==true){
+                    Log.e("JAMES","inLoop_playPause")
+                    mediaPlayer.pause()
+                    playerState_pref.edit().putBoolean("playStop",false).commit()
+                    playStop=false
+
+                }
                 if(isExitApp){
                     Log.e("JAMES","isExitApp")
-                    mediaPlayer.stop()
+                    if(mediaPlayer.isPlaying)mediaPlayer.stop()
                     mediaPlayer.release()
                     fis.close()
                     break
@@ -61,9 +73,10 @@ class MediaPlayerService : Service() {
             fis = FileInputStream(tempMp3)
             mediaPlayer.setDataSource(fis.fd)
             mediaPlayer.prepare()
-            mediaPlayer.start()
 
         }catch (e: IOException){
+            e.printStackTrace()
+        }catch (e:IllegalStateException){
             e.printStackTrace()
         }
     }
