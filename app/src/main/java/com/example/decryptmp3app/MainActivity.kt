@@ -1,5 +1,6 @@
 package com.example.decryptmp3app
 
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -13,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import java.io.File
 import java.lang.Exception
 import java.security.spec.AlgorithmParameterSpec
+import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -49,6 +51,10 @@ class MainActivity : AppCompatActivity() {
         val editor=sharedPreferences.edit()
         listView_musicList.setOnItemClickListener { adapterView, view, i, l ->
             editor.putString("MusicFileName",MusicArrayList[i]).commit()
+            Log.e("JAMES","inListViewLoop")
+            val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+            val player_editor=playerState_pref.edit()
+            player_editor.putBoolean("isItemClick",true).commit()
             val intent=Intent(this,PlayerActivity::class.java)
             startActivity(intent)
         }
@@ -82,11 +88,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     override fun onBackPressed() {
         super.onBackPressed()
         val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
         val player_editor=playerState_pref.edit()
         player_editor.putBoolean("isExitApp",true).commit()
+        val intent=Intent(this,MediaPlayerService::class.java)
+        applicationContext.stopService(intent)
     }
+
 }

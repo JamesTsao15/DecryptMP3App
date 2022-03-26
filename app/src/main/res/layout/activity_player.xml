@@ -35,21 +35,21 @@
         android:layout_height="32dp"
         android:layout_marginStart="12dp"
         android:layout_marginTop="44dp"
-        app:layout_constraintStart_toEndOf="@+id/textView_start_time"
+        app:layout_constraintStart_toEndOf="@+id/textView_playing_time"
         app:layout_constraintTop_toBottomOf="@+id/imageView2" />
 
     <TextView
-        android:id="@+id/textView_start_time"
+        android:id="@+id/textView_playing_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="38dp"
+        android:layout_marginStart="32dp"
         android:layout_marginTop="304dp"
         android:text="00:00"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView_endTime"
+        android:id="@+id/textView_TotalTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"

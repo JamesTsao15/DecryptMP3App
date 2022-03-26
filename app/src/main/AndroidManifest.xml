@@ -15,7 +15,8 @@
         <service
             android:name=".MediaPlayerService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"
+            android:stopWithTask="true"></service>
 
         <activity
             android:name=".PlayerActivity"
