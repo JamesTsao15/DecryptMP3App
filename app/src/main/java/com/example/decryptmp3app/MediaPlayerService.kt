@@ -17,7 +17,7 @@ import java.util.*
 class MediaPlayerService : Service() {
     private lateinit var mediaPlayer:MediaPlayer
     private lateinit var fis:FileInputStream
-
+    private var isPrepareDone:Boolean=false
     override fun onCreate() {
         Log.e("JAMES","Service_onCreate")
         mediaPlayer= MediaPlayer()
@@ -27,7 +27,7 @@ class MediaPlayerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
         val playerState_edtior=playerState_pref.edit()
-
+        initPlayerFile()
         val thread=Thread(Runnable {
             while(true){
                 val playStart: Boolean =playerState_pref.getBoolean("playStart", false)
@@ -43,11 +43,11 @@ class MediaPlayerService : Service() {
                     initPlayerFile()
                     playerState_edtior.putBoolean("isItemClick",false).commit()
                 }
-                if(playStart) {
+                if(playStart && isPrepareDone) {
                     if(!mediaPlayer.isPlaying)mediaPlayer.start()
                     playerState_edtior.putBoolean("playStart",false).commit()
                 }
-                if(playStop){
+                if(playStop && isPrepareDone){
                     if(mediaPlayer.isPlaying)mediaPlayer.pause()
                     playerState_edtior.putBoolean("playStop",false).commit()
 
@@ -57,7 +57,7 @@ class MediaPlayerService : Service() {
                     playerState_edtior.putBoolean("isExitApp",false).commit()
                     break
                 }
-                if(isSeeking){
+                if(isSeeking && isPrepareDone){
                     val musicSecond=playerState_pref.getInt("SeekBarCurrentPosition",0)
                     mediaPlayer.seekTo(musicSecond)
                     playerState_edtior.putBoolean("isSeeking",false).commit()
@@ -78,6 +78,7 @@ class MediaPlayerService : Service() {
         if(mediaPlayer.isPlaying){
             mediaPlayer.stop()
             mediaPlayer.reset()
+            isPrepareDone=false
         }
         PlayAudioByByteArray(mp3File_byteArray)
     }
@@ -92,10 +93,13 @@ class MediaPlayerService : Service() {
             fos.close()
             fis = FileInputStream(tempMp3)
             mediaPlayer.setDataSource(fis.fd)
-            mediaPlayer.prepare()
-            val musicTotalTime=mediaPlayer.duration
-            playerState_edtior.putInt("MusicFileTime",musicTotalTime).commit()
-
+            mediaPlayer.prepareAsync()
+            mediaPlayer.setOnPreparedListener {
+                val musicTotalTime=mediaPlayer.duration
+                playerState_edtior.putInt("MusicFileTime",musicTotalTime).commit()
+                mediaPlayer.start()
+                isPrepareDone=true
+            }
         }catch (e: IOException){
             e.printStackTrace()
         }catch (e:IllegalStateException){
