@@ -35,7 +35,6 @@ class MediaPlayerService : Service() {
                 val isExitApp:Boolean=playerState_pref.getBoolean("isExitApp",false)
                 val isSeeking:Boolean=playerState_pref.getBoolean("isSeeking",false)
                 val isItemClick:Boolean=playerState_pref.getBoolean("isItemClick",false)
-                val isSeekingVolume:Boolean=playerState_pref
                 val musicVolume:Float=playerState_pref.getFloat("MusicVolume",0F)
                 AdjustMusicVolume(musicVolume)
                 playerState_edtior.putInt("MusicCurrentTime",mediaPlayer.currentPosition).commit()
