@@ -34,6 +34,7 @@ class PlayerActivity : AppCompatActivity() {
     private var IVAES:ByteArray= ByteArray(0)
     private var AESKey:ByteArray= ByteArray(0)
     private var isPlayingOrNot:Boolean=false
+    private var isDecryptDone:Boolean=false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +45,7 @@ class PlayerActivity : AppCompatActivity() {
         btn_PlayOrPause=findViewById(R.id.imageButton_PlayOrPause)
         seekBar_CurrentProgress=findViewById(R.id.seekBar_currentProgress)
         seekBar_VoiceControl=findViewById(R.id.seekBar_VoiceControl)
+        isDecryptDone=false
         Log.e("JAMES","onCreate_playerActivity")
     }
 
@@ -56,6 +58,8 @@ class PlayerActivity : AppCompatActivity() {
         val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
         val player_editor=playerState_pref.edit()
         val musicName: String? =mp3FileInformation_pref.getString("MusicFileName","")
+        val isStartTheService:Boolean=playerState_pref.getBoolean("isStartTheService",false)
+        player_editor.putBoolean("isDecryptDone",isDecryptDone).commit()
         tv_MusicFileName.text=musicName
         val document_dir=Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
         val encrypt_mp3_file=File(document_dir,"EncryptMP3")
@@ -64,13 +68,16 @@ class PlayerActivity : AppCompatActivity() {
         var isSeeking:Boolean=true
         openKEYFile()
         val decrypt_musicFile_ByteArray:ByteArray=DecryptByteArrayToMp3(IVAES,AESKey,music_byteArray)
+        Log.e("JAMES","Decrypt:"+Arrays.toString(decrypt_musicFile_ByteArray))
         val intent= Intent(this,MediaPlayerService::class.java)
         val mp3File_byteArray_To_String=Base64.getEncoder().encodeToString(decrypt_musicFile_ByteArray)
         mp3FileInformation_pref.edit().putString("mp3File_byteArray_To_String",mp3File_byteArray_To_String).commit()
-        initTotaltime(playerState_pref.getInt("MusicFileTime",0))
-        startService(intent)
+        isDecryptDone=true
+        player_editor.putBoolean("isDecryptDone",isDecryptDone).commit()
+        if(!isStartTheService)startService(intent)
         isPlayingOrNot=true
         player_editor.putBoolean("playStart",true).commit()
+
         btn_PlayOrPause.setOnClickListener {
             if(isPlayingOrNot==true){
                 btn_PlayOrPause.setImageResource(R.drawable.ic_baseline_play_arrow_24)
@@ -121,12 +128,15 @@ class PlayerActivity : AppCompatActivity() {
         val thread=Thread(
             Runnable {
                 while(true){
+                    runOnUiThread {
+                        initTotaltime(playerState_pref.getInt("MusicFileTime",0))
+                        playingTime(playerState_pref.getInt("MusicCurrentTime",0))
+                    }
                     val isExitApp=playerState_pref.getBoolean("isExitApp",false)
                     seekBar_CurrentProgress.progress=playerState_pref.getInt("MusicCurrentTime",0)
-                    playingTime(playerState_pref.getInt("MusicCurrentTime",0))
+
                     if(isExitApp){
                         Log.e("JAMES","isExitApp")
-                        onDestroy()
                         player_editor.putBoolean("isExitApp",false).commit()
                         break
                     }

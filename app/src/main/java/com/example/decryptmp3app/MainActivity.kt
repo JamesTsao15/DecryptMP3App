@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        Log.e("JAMES","onCreate_MainActivity")
         listView_musicList=findViewById(R.id.listView_mp3File)
         val readPermisson:String=android.Manifest.permission.READ_EXTERNAL_STORAGE
         val writePermission:String=android.Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         val sharedPreferences:SharedPreferences=
             getSharedPreferences("Mp3FileInformation", MODE_PRIVATE)
         val editor=sharedPreferences.edit()
+        Log.e("JAMES","onResume_MainActivity")
         listView_musicList.setOnItemClickListener { adapterView, view, i, l ->
             editor.putString("MusicFileName",MusicArrayList[i]).commit()
             Log.e("JAMES","inListViewLoop")
@@ -95,6 +97,16 @@ class MainActivity : AppCompatActivity() {
         player_editor.putBoolean("isExitApp",true).commit()
         val intent=Intent(this,MediaPlayerService::class.java)
         applicationContext.stopService(intent)
+        player_editor.putBoolean("isStartTheService",false).commit()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val player_editor=playerState_pref.edit()
+        val intent=Intent(this,MediaPlayerService::class.java)
+        applicationContext.stopService(intent)
+        player_editor.putBoolean("isStartTheService",false).commit()
     }
 
 }

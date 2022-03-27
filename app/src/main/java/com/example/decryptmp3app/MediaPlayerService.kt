@@ -11,37 +11,44 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.util.*
 
 class MediaPlayerService : Service() {
     private lateinit var mediaPlayer:MediaPlayer
     private lateinit var fis:FileInputStream
     private var isPrepareDone:Boolean=false
+    private var isStartTheService:Boolean=false
     override fun onCreate() {
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val playerState_edtior=playerState_pref.edit()
         Log.e("JAMES","Service_onCreate")
         mediaPlayer= MediaPlayer()
+        isStartTheService=true
+        playerState_edtior.putBoolean("isStartTheService",isStartTheService).commit()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.e("JAMES","Service_OnStartCommand")
         val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
         val playerState_edtior=playerState_pref.edit()
-        initPlayerFile()
         val thread=Thread(Runnable {
             while(true){
                 val playStart: Boolean =playerState_pref.getBoolean("playStart", false)
                 val playStop:Boolean=playerState_pref.getBoolean("playStop",false)
                 val isExitApp:Boolean=playerState_pref.getBoolean("isExitApp",false)
                 val isSeeking:Boolean=playerState_pref.getBoolean("isSeeking",false)
+                val isSeeking_Volume:Boolean=playerState_pref.getBoolean("isSeekingVolume",false)
                 val isItemClick:Boolean=playerState_pref.getBoolean("isItemClick",false)
                 val musicVolume:Float=playerState_pref.getFloat("MusicVolume",0F)
-                AdjustMusicVolume(musicVolume)
+                val isDecryptDone:Boolean=playerState_pref.getBoolean("isDecryptDone",false)
+
                 playerState_edtior.putInt("MusicCurrentTime",mediaPlayer.currentPosition).commit()
-                if(isItemClick){
+                if(isItemClick && isDecryptDone){
                     Log.e("JAMES","isItemClick")
                     initPlayerFile()
                     playerState_edtior.putBoolean("isItemClick",false).commit()
+                    playerState_edtior.putBoolean("isDecryptDone",false).commit()
                 }
                 if(playStart && isPrepareDone) {
                     if(!mediaPlayer.isPlaying)mediaPlayer.start()
@@ -62,6 +69,9 @@ class MediaPlayerService : Service() {
                     mediaPlayer.seekTo(musicSecond)
                     playerState_edtior.putBoolean("isSeeking",false).commit()
                 }
+                if(isSeeking_Volume && isPrepareDone){
+                    AdjustMusicVolume(musicVolume)
+                }
                 Thread.sleep(1)
             }
         })
@@ -74,12 +84,13 @@ class MediaPlayerService : Service() {
         val mp3File_pref=getSharedPreferences("Mp3FileInformation", MODE_PRIVATE)
         val mp3File_Base64String=mp3File_pref.getString("mp3File_byteArray_To_String","")
         val mp3File_byteArray=Base64.getDecoder().decode(mp3File_Base64String)
-        Log.e("JAMES",Arrays.toString(mp3File_byteArray))
+        Log.e("JAMES","Playing:"+Arrays.toString(mp3File_byteArray))
         if(mediaPlayer.isPlaying){
             mediaPlayer.stop()
-            mediaPlayer.reset()
+            mediaPlayer.release()
             isPrepareDone=false
         }
+        mediaPlayer= MediaPlayer()
         PlayAudioByByteArray(mp3File_byteArray)
     }
     private fun PlayAudioByByteArray(mp3ByteArray: ByteArray){
@@ -98,7 +109,9 @@ class MediaPlayerService : Service() {
                 val musicTotalTime=mediaPlayer.duration
                 playerState_edtior.putInt("MusicFileTime",musicTotalTime).commit()
                 mediaPlayer.start()
+                mediaPlayer.setVolume(60f/100f,60f/100f)
                 isPrepareDone=true
+
             }
         }catch (e: IOException){
             e.printStackTrace()
@@ -111,7 +124,11 @@ class MediaPlayerService : Service() {
     }
     override fun onDestroy() {
         Log.e("JAMES","destroy")
+        val playerState_pref=getSharedPreferences("PlayerState", MODE_PRIVATE)
+        val playerState_edtior=playerState_pref.edit()
         mediaPlayer.stop()
         mediaPlayer.release()
+        isStartTheService=false
+        playerState_edtior.putBoolean("isStartTheService",isStartTheService).commit()
     }
 }
